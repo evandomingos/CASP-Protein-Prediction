@@ -1,58 +1,87 @@
-#various libraries
+#Various libraries
 library(tidyverse)  
 library(caret)
-library(tensorflow)
-library(ranger)     #random forest 
-library(nnet)  #neural net
-library(keras)
+library(tensorflow) 
+library(ranger)     #Random forest (more efficient than rf library for higher dimensional data)
+library(nnet)  #Neural net
+library(keras) 
 library(gtable)
-library(torch)
-library(luz) # high-level interface for torch
-library(torchvision) # for datasets and image transformation
-library(torchdatasets) # for datasets we are going to use
+library(luz) # High-level interface for torch
+library(torchvision) # For datasets and image transformation
+library(torchdatasets) # For datasets we are going to use
+library(randomForest)
 library(zeallot)
 library(rpart)
 library(rpart.plot)
 library(torch)
 library(torchvision)
+library(xgboost)
 
-#torch deep learning neural network
-
-#load CASP 5.9 Set
+# Load CASP 5.9 Set from 
 dataset <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/00265/CASP.csv", header = TRUE, stringsAsFactors = FALSE)
 
-#remove missing data (none in CASP dataset), create protein set
+# Remove missing data (none in CASP dataset), create protein set
 protein <- na.omit(dataset)
 
 #n number of protein residues: 45730 obs
 n <- nrow(protein)
-#for reproduction
-set.seed(13)
+# For reproduction
+set.seed(7)
 
-#number of test samples: 1/3 obs
+# Number of test samples = 1/3 observations
 ntest <- trunc(n / 3)
 #randomly select test IDs from 
 testid <- sample(1:n, ntest)
 
-#set torch seed
-torch_manual_seed(13)
+# Set PyTorch seed
+torch_manual_seed(7)
 
-#scale variables, seperate x labels ,y target var. Remove intercepts
+# Scale variables, separate x labels ,y target var. Remove intercepts
 x <- scale(model.matrix(protein$RMSD ~ . - 1, data = protein))
 y <- protein$RMSD
 
 
 
-#very easy to produce good looking tree, extremely overfitted though
 
-#RF regression tree
+#Gradient Boosted Tree
+# Gradient Boosted Regression Tree with MAE Objective Function
+gdboosteds_protein <- xgboost(data = x[-testid,], label = y[-testid], nrounds = 10000, objective = "reg:absoluteerror")
+gdboost_test_pred <- predict(gdboosteds_protein, x[testid, ])
+
+# Calculate MSE
+mse <- mean((gdboost_test_pred-y[testid])^2)
+#19.3254 MSE for set.seed(7), nround = 10000
+mse
+
+
+# Calculate MAE
+mae <- mean(abs(gdboost_test_pred-y[testid]))
+#2.979239 MAE for set.seed(7), nround = 10000
+mae
+
+
+importance_matrix <- xgb.importance(model = gdboosteds_protein)
+importance_matrix
+xgb.plot.importance(importance_matrix, col = rgb(124/256,148/256,198/256), xlab = "Importance (0-1)", 
+                    ylab = "Feature")
+
+
+# First Method
+# Random Forest regression tree with the obejctive of plotting feature important and purposely overfitting a model
+# Very easy to produce good looking tree, extremely overfitted and validation MAE explodes
+
 library(randomForest)
 
+
 # Split the data into training and testing sets
+
+# *** Un-comment these blocks to run the Random Forest Model. Commented out so the train_id object does not affect Nueral Networks ***
+
+# For reproducibility
+set.seed(13)
 #train_id <- sample(1:n, floor(n * 0.6), replace = FALSE)
 #valid_id <- sample(setdiff(1:n, train_id), floor(n * 0.2), replace = FALSE)
 #test_id <- setdiff(1:n, union(train_id, valid_id))
-
 
 
 #train_x <- x[train_id, ]
@@ -61,6 +90,8 @@ library(randomForest)
 #valid_y <- y[valid_id]
 #test_x <- x[test_id, ]
 #test_y <- y[test_id]
+
+
 # Train the random forest regression model
 rf_model <- randomForest(train_x, train_y, ntree = 500)
 
@@ -71,16 +102,27 @@ pred_test <- predict(rf_model, test_x)
 # Calculate mean squared error on the test set
 mae_valid <- mean(abs(pred_valid - test_y))
 mae_test <- mean(abs(pred_test-test_y))
-#2.535
+
+#MAE 2.5555 on test set with  
+# After purposely overfitting as much as possible (try nrounds >>500) this MAE of 2.55 appears to be the absolute minimume error achievable
 mae_test
-#6.148
+
+#6.161
 mae_valid
 
-#
-protein_tree1 <- rpart(RMSD ~ ., data = protein, control = rpart.control(minsplit = 20))
-pred_protein_tree1 <- predict(protein_tree1, newdata = protein[testid, ])
-pred_protein_tree1
+# Strict Regression Tree
+protein_tree1 <- rpart(RMSD ~ ., data = protein[train_id,], control = rpart.control(minsplit = 1))
 
+# Predict on Training set, goal was to minimize MAE
+train_pred_protein_tree1 <- predict(protein_tree1, protein[train_id,])
+# Calculate MAE on training set
+train_tree1_mae <- mean(abs(train_pred_protein_tree1-protein$RMSD[train_id]))
+train_tree1_mae
+
+# Predict on Test Set, Calculate MAE
+test_pred_protein_tree1 <- predict(protein_tree1, newdata = protein[test_id, ])
+
+# Calculate MAE for test set
 mae_protein_tree1 <- mean(abs(pred_protein_tree1 - y[testid]))
 mae_protein_tree1
 
