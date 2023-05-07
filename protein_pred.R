@@ -43,27 +43,19 @@ y <- protein$RMSD
 
 
 
-#Gradient Boosted Tree
-# Gradient Boosted Regression Tree with MAE Objective Function
-gdboosteds_protein <- xgboost(data = x[-testid,], label = y[-testid], nrounds = 10000, objective = "reg:absoluteerror")
-gdboost_test_pred <- predict(gdboosteds_protein, x[testid, ])
-
-# Calculate MSE
-mse <- mean((gdboost_test_pred-y[testid])^2)
-#19.3254 MSE for set.seed(7), nround = 10000
-mse
 
 
-# Calculate MAE
-mae <- mean(abs(gdboost_test_pred-y[testid]))
-#2.979239 MAE for set.seed(7), nround = 10000
-mae
 
 
-importance_matrix <- xgb.importance(model = gdboosteds_protein)
-importance_matrix
-xgb.plot.importance(importance_matrix, col = rgb(124/256,148/256,198/256), xlab = "Importance (0-1)", 
-                    ylab = "Feature")
+
+
+
+
+
+
+
+
+
 
 
 # First Method
@@ -286,8 +278,8 @@ modnn3 <- set_hparams( setup(modnn3 ,
                        input_size = ncol(x))
 
 
-#training
-#210sec per epoch
+# Training for ModNN3 Neural Network
+# 210sec per epoch
 fitted3 <-   fit(modnn3,
                  data = list(x[-testid, ],
                              matrix(y[-testid], ncol = 1)),
@@ -308,7 +300,7 @@ fitted3$ctx
 
 
 
-# Predict RMSD values for test set
+# Predict RMSD values on the test set
 test_pred3 <- predict(fitted3, x[testid, ])
 
 test_pred3 <- predict(fitted3, x[testid, ])
@@ -316,7 +308,7 @@ test_pred3 <- predict(fitted3, x[testid, ])
 plot(y[testid], test_pred3, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "NN3: 3 Layer RELU/ELU/CELU")
 abline(a = 0, b = 1, col = "purple")
 
-#NN3 MAE calc
+# NN3 MAE calc
 length(testid)
 
 
@@ -326,7 +318,9 @@ mae_nn3
 
 
 
-#add binary step (Threshold) Hidden Layer
+# Addition of Binary Step (Threshold) Hidden Layer
+# Threshold of 15 Angstroms
+# Intended to ebtter predict RMSD hta appears to be steeped at the 15 Angstrom level
 modnn4 <- nn_module(
   initialize = function(input_size) {
     self$hidden1 <- nn_linear(input_size, 50)
@@ -336,7 +330,8 @@ modnn4 <- nn_module(
     self$activation2 <- nn_elu()
     self$dropout2 <- nn_dropout(0.4)
     self$hidden3 <- nn_linear(50, 50)
-    self$activation3 <- nn_relu()#nn_threshold ( value = 15, inplace = FALSE, threshold = 15)
+    self$activation3 <- nn_relu()
+    #nn_threshold ( value = 15, inplace = FALSE, threshold = 15)
     self$dropout3 <- nn_dropout(0.4)
     self$hidden4 <- nn_linear(50, 50)
     self$activation4 <- nn_elu()
@@ -370,8 +365,8 @@ modnn4 <- set_hparams( setup(modnn4 ,
                        input_size = ncol(x))
 
 
-#training
-#215sec per epoch
+# Training
+# 215 seconds per epoch
 fitted4 <-   fit(modnn4,
                  data = list(x[-testid, ],
                              matrix(y[-testid], ncol = 1)),
@@ -395,7 +390,7 @@ abline(a = 0, b = 1, col = "purple")
 
 
 
-#stack on a bunch of hidden layers
+# Stack on successive RELU ELU hidden layers
 modnn5 <- nn_module(
   initialize = function(input_size) {
     self$hidden1 <- nn_linear(input_size, 50)
@@ -532,19 +527,16 @@ abline(a = 0, b = 1, col = "purple")
 
 
 
-
-
-
-
-
-modnn4 <- nn_module(
+# GMDH NUeral Network
+# USe of diufferent 
+modnn6 <- nn_module(
   initialize = function(input_size) {
     self$hidden1 <- nn_linear(input_size, 50)
     
     # Use different activation functions for each feature
-    self$activation1 <- nn_relu()  # F1, F2, F3, F5, F6, F7, F9
-    self$activation2 <- nn_sigmoid()  # F4
-    self$activation3 <- nn_linear()  # F8
+    self$activation1 <- nn_relu()  # F1, F2, F5, F6, F7, F9
+    self$activation2 <- nn_linear()  # F4 F3 (Polar Surface Areas)
+    self$activation3 <- nn_linear()  # F8 
     
     self$dropout1 <- nn_dropout(0.4)
     self$hidden2 <- nn_linear(50, 50)
@@ -581,18 +573,55 @@ modnn4 <- nn_module(
   }
 )
 
-modnn4_setup <- setup(modnn4 ,
+modnn4_setup <- setup(modnn6 ,
                       loss = nn_mse_loss(),
                       optimizer = optim_rmsprop,
                       metrics = list(luz_metric_mae()))
 
-modnn4 <- set_hparams(modnn4_setup, input_size = ncol(x))
+modnn6 <- set_hparams(modnn4_setup, input_size = ncol(x))
 
-#training
+# Training ModNN6 GMDH Nueral Network
+
 #210sec per epoch
-fitted4 <- fit(modnn4,
+fitted6 <- fit(modnn6,
                data = list(x[-testid, ],
                            matrix(y[-testid], ncol = 1)),
                valid_data = list(x[testid, ],
                                  matrix(y[testid], ncol = 1)),
                epochs = 100)
+
+
+
+
+
+#Gradient Boosted Tree
+# Gradient Boosted Regression Tree with MAE Objective Function
+gdboosteds_protein <- xgboost(data = x[-testid,], label = y[-testid], nrounds = 10000, objective = "reg:absoluteerror")
+gdboost_test_pred <- predict(gdboosteds_protein, x[testid, ])
+
+# Calculate MSE
+mse <- mean((gdboost_test_pred-y[testid])^2)
+#19.3254 MSE for set.seed(7), nround = 10000
+mse
+
+
+# Calculate MAE
+mae <- mean(abs(gdboost_test_pred-y[testid]))
+#2.979239 MAE for set.seed(7), nround = 10000
+mae
+
+
+importance_matrix <- xgb.importance(model = gdboosteds_protein)
+importance_matrix
+xgb.plot.importance(importance_matrix, col = rgb(124/256,148/256,198/256), xlab = "Importance (0-1)", 
+                    ylab = "Feature")
+
+
+
+
+
+
+
+
+
+
