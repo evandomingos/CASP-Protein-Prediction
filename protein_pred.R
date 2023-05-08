@@ -126,10 +126,10 @@ mae_protein_tree1
 # Plot Fitted Tree
 rpart.plot(protein_tree1)
   
-
+set.seed(123)
 # Gradient Boosted Tree
 # Gradient Boosted Regression Tree with MAE Objective Function
-gdboosteds_protein <- xgboost(data = x[-testid,], label = y[-testid], nrounds = 10000, objective = "reg:absoluteerror")
+gdboosteds_protein <- xgboost(data = x[-testid,], label = y[-testid], nrounds = 20000, objective = "reg:absoluteerror")
 gdboost_test_pred <- predict(gdboosteds_protein, x[testid, ])
 # For set.seed(13), nrounds = 10,000, minsplit = DEFAULT, trained MAE = 2.628
 
