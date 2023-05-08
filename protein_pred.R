@@ -76,6 +76,9 @@ set.seed(13)
 # Train the random forest regression model
 rf_model <- randomForest(train_x, train_y, ntree = 500)
 
+# Plot feature importance
+varImpPlot(rf_model, main = "Feature Importance")
+
 # Predict RMSD for test set using the trained model
 pred_valid <- predict(rf_model, valid_x)
 pred_test <- predict(rf_model, test_x)
@@ -85,11 +88,12 @@ mae_valid <- mean(abs(pred_valid - test_y))
 mae_test <- mean(abs(pred_test-test_y))
 
 # MAE 2.5555 on test set 
-# After purposely overfitting as much as possible (try nrounds >>500) this MAE of 2.55 appears to be the absolute minimume error achievable
+# After purposely overfitting as much as possible (try nrounds >>500) this MAE of 2.55 appears to be the absolute minimum error achievable
 mae_test
 
-# MAE 6.161 on validation, seocnd holdout set
+# MAE 6.161 on validation, second holdout set
 mae_valid
+
 
 # Conventional Regression Tree for the purpose of displaying featurew importance
 protein_tree1 <- rpart(RMSD ~ ., data = protein[train_id,], control = rpart.control(minsplit = 1))
@@ -110,6 +114,7 @@ mae_protein_tree1 <- mean(abs(pred_protein_tree1 - y[testid]))
 mae_protein_tree1
 
 rpart.plot(protein_tree1)
+
 
   
 
@@ -658,6 +663,8 @@ modnn7 <- gmdh.mia(X = as.matrix(protein[-testid, 2:10]),
 # PRESS criteria: Predicted Residual Error Sum of Squares takes into account all information in data sample and it is computed without recalculation each test point.
 # "test" is alternative argument, estimation of RMSE and is computationally more efficient
 
+summary(modnn7)
+
 # Predict on validation set for GMDH NN
 pred.modnn7 <- predict(modnn7, as.matrix(protein[testid, 2:10]))
 
@@ -680,7 +687,7 @@ mae <- mean(abs(pred.modnn7_clean - protein.test[,1]))
 mae
 
 # Plot predicted RMSD against actual RMSD
-plot(protein.test[,1], pred.modnn7_clean, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "NN8: 141 Layer MIA GMDH Neural Network")
+plot(protein.test[,1], pred.modnn7_clean, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "NN8: 136 Layer MIA GMDH Neural Network")
 abline(a = 0, b = 1, col = "purple")
 
 
