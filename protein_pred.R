@@ -84,14 +84,24 @@ pred_valid <- predict(rf_model, valid_x)
 pred_test <- predict(rf_model, test_x)
 
 # Calculate mean squared error on the test set and validation (extra holdout data)
-mae_valid <- mean(abs(pred_valid - test_y))
+mae_valid <- mean(abs(pred_valid - valid_y))
 mae_test <- mean(abs(pred_test-test_y))
+
+
+
+# Scatterplot of predicted vs actual RMSD on validation set
+plot(valid_y, pred_valid, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "RF Regression Tree")
+abline(a = 0, b = 1, col = "purple")
+
+# Scatterplot of predicted vs actual RMSD on test set
+plot(test_y, pred_test, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "RF Regression Tree")
+abline(a = 0, b = 1, col = "purple")
 
 # MAE 2.5555 on test set 
 # After purposely overfitting as much as possible (try nrounds >>500) this MAE of 2.55 appears to be the absolute minimum error achievable
 mae_test
 
-# MAE 6.161 on validation, second holdout set
+# MAE 2.541 on validation, second holdout set
 mae_valid
 
 
@@ -117,7 +127,7 @@ mae_protein_tree1
 rpart.plot(protein_tree1)
   
 
-#Gradient Boosted Tree
+# Gradient Boosted Tree
 # Gradient Boosted Regression Tree with MAE Objective Function
 gdboosteds_protein <- xgboost(data = x[-testid,], label = y[-testid], nrounds = 10000, objective = "reg:absoluteerror")
 gdboost_test_pred <- predict(gdboosteds_protein, x[testid, ])
@@ -133,6 +143,10 @@ mse
 mae <- mean(abs(gdboost_test_pred-y[testid]))
 # 2.979239 MAE for set.seed(7), nround = 10000
 mae
+
+# Scatterplot of predicted vs actual RMSD
+plot(y[testid], gdboost_test_pred, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "Gradient Boosted Regression Tree")
+abline(a = 0, b = 1, col = "purple")
 
 
 importance_matrix <- xgb.importance(model = gdboosteds_protein)
@@ -155,7 +169,7 @@ dataset <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/0
 # Remove missing data (none in CASP dataset), create protein set
 protein <- na.omit(dataset)
 
-#n number of protein residues: 45730 obs
+# n number of protein residues: 45730 obs
 n <- nrow(protein)
 # For reproduction
 set.seed(7)
@@ -226,7 +240,7 @@ mse
 # MSE of 50.7419 for 100 epoch model
 
 
-# scatterplot of predicted vs actual RMSD
+# Scatterplot of predicted vs actual RMSD
 plot(y[testid], test_pred, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "RELU HL Nueral Network")
 abline(a = 0, b = 1, col = "purple")
 
