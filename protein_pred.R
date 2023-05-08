@@ -220,10 +220,11 @@ fitted$ctx
 # Predict RMSD values for test set
 test_pred <- predict(fitted, x[testid, ])
 
-#calc MSE
+# Calculate MSE on test set
 mse <- mean((test_pred-y[testid])^2)
 mse
-#50.7419 for 100 epoch model
+# MSE of 50.7419 for 100 epoch model
+
 
 # scatterplot of predicted vs actual RMSD
 plot(y[testid], test_pred, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "RELU HL Nueral Network")
@@ -231,7 +232,6 @@ abline(a = 0, b = 1, col = "purple")
 
 
 
-# Best model by MAE & complexity 
 # 2nd Model evalauted, Addition of ELU hidden layer
 modnn2 <- nn_module(
   initialize = function(input_size) {
@@ -271,7 +271,7 @@ fitted2 <-   fit(modnn2,
                             matrix(y[-testid], ncol = 1)),
                 valid_data = list(x[testid, ],
                                   matrix(y[testid], ncol = 1)),
-                epochs = 100)
+                epochs = 1)
 
 plot(fitted2)
 summary(fitted2)
