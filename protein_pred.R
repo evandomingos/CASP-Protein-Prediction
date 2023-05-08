@@ -113,9 +113,8 @@ mae_protein_tree1 <- mean(abs(pred_protein_tree1 - y[testid]))
 # Test MAE 5.49
 mae_protein_tree1
 
+# Plot Fitted Tree
 rpart.plot(protein_tree1)
-
-
   
 
 #Gradient Boosted Tree
@@ -582,7 +581,7 @@ abline(a = 0, b = 1, col = "purple")
 
 
 # Separation of features Nueral Network
-# Attempt to isloate Polar surface areas which appear to be important for RMSD prediction, likely a factor of Van Der Whaalen 
+# Attempt to isloate Polar surface areas which appear to be important for RMSD prediction, likely a function of van der Waals force
 modnn6 <- nn_module(
   initialize = function(input_size) {
     self$hidden1 <- nn_linear(input_size, 50)
@@ -687,11 +686,8 @@ mae <- mean(abs(pred.modnn7_clean - protein.test[,1]))
 mae
 
 # Plot predicted RMSD against actual RMSD
-plot(protein.test[,1], pred.modnn7_clean, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "NN8: 136 Layer MIA GMDH Neural Network")
+plot(protein.test[,1], pred.modnn7_clean, xlab = "Actual RMSD (Angstrom)", ylab = "Predicted RMSD (Angstrom)", main = "NN7: 136 Layer MIA GMDH NN")
 abline(a = 0, b = 1, col = "purple")
-
-
-
 
 
 
