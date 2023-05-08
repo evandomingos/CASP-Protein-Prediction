@@ -26,3 +26,9 @@ protein_sorted <- protein[order(protein$RMSD),]
 # plot RMSD in increasing order
 plot(protein_sorted$RMSD, type = "l", xlab = "Residue", ylab = "RMSD", main = "RMSD Sorted in Increasing Order")
 abline(a = 0, b = 20.99/45730, col = "purple")
+par(ask = FALSE)
+
+
+
+
+
