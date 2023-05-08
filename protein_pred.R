@@ -655,7 +655,8 @@ modnn7 <- gmdh.mia(X = as.matrix(protein[-testid, 2:10]),
                       y = as.matrix(protein[-testid, 1]), 
                       prune = ncol(protein[-testid, 2:10]), 
                       criteria = "PRESS")
-
+# PRESS criteria: Predicted Residual Error Sum of Squares takes into account all information in data sample and it is computed without recalculation each test point.
+# "test" is alternative argument, estimation of RMSE and is computationally more efficient
 
 # Predict on validation set for GMDH NN
 pred.modnn7 <- predict(modnn7, as.matrix(protein[testid, 2:10]))
@@ -692,7 +693,7 @@ abline(a = 0, b = 1, col = "purple")
 modnn8 <- gmdh.gia(X = as.matrix(protein[-testid, 2:10]), 
                    y = as.matrix(protein[-testid, 1]), 
                    prune = 9*2, 
-                   criteria = "testr")
+                   criteria = "test")
 
 ncol(protein[-testid, 2:10])
 # Predict on validation set for GMDH NN
